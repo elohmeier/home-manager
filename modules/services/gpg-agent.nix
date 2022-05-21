@@ -250,13 +250,25 @@ in {
       '') cfg.sshKeys;
     })
 
+    (mkIf (pkgs.stdenv.isDarwin && cfg.enableSshSupport) {
+      launchd.agents.gpg-agent = {
+        enable = true;
+        config = {
+          ProgramArguments = [ "${gpgPkg}/bin/gpgconf" "--launch" "gpg-agent" ];
+          RunAtLoad = true;
+          KeepAlive.SuccessfulExit = false;
+          EnvironmentVariables.GNUPGHOME = homedir;
+        };
+      };
+    })
+
     # The systemd units below are direct translations of the
     # descriptions in the
     #
     #   ${gpgPkg}/share/doc/gnupg/examples/systemd-user
     #
     # directory.
-    {
+    (mkIf pkgs.stdenv.isLinux {
       systemd.user.services.gpg-agent = {
         Unit = {
           Description = "GnuPG cryptographic agent and passphrase cache";
@@ -290,9 +302,9 @@ in {
 
         Install = { WantedBy = [ "sockets.target" ]; };
       };
-    }
+    })
 
-    (mkIf cfg.enableSshSupport {
+    (mkIf (pkgs.stdenv.isLinux && cfg.enableSshSupport) {
       systemd.user.sockets.gpg-agent-ssh = {
         Unit = {
           Description = "GnuPG cryptographic agent (ssh-agent emulation)";
@@ -312,7 +324,7 @@ in {
       };
     })
 
-    (mkIf cfg.enableExtraSocket {
+    (mkIf (pkgs.stdenv.isLinux && cfg.enableExtraSocket) {
       systemd.user.sockets.gpg-agent-extra = {
         Unit = {
           Description =
