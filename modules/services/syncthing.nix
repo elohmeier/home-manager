@@ -57,14 +57,9 @@ in {
 
   config = mkMerge [
     (mkIf cfg.enable {
-      assertions = [
-        (lib.hm.assertions.assertPlatform "services.syncthing" pkgs
-          lib.platforms.linux)
-      ];
-
       home.packages = [ (getOutput "man" pkgs.syncthing) ];
 
-      systemd.user.services = {
+      systemd.user.services = mkIf pkgs.stdenv.isLinux {
         syncthing = {
           Unit = {
             Description =
@@ -93,6 +88,14 @@ in {
           };
 
           Install = { WantedBy = [ "default.target" ]; };
+        };
+      };
+
+      launchd.agents.syncthing = mkIf pkgs.stdenv.isDarwin {
+        enable = true;
+        config = {
+          ProgramArguments = [ "${pkgs.syncthing}/bin/syncthing" "-no-browser" "-no-restart" "-logflags=0" ] ++ cfg.extraOptions;
+          RunAtLoad = true;
         };
       };
     })
