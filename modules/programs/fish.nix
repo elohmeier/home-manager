@@ -145,7 +145,14 @@ let
   aliasesStr = concatStringsSep "\n"
     (mapAttrsToList (k: v: "alias ${k} ${escapeShellArg v}") cfg.shellAliases);
 
-in {
+  babelfishTranslate = path: name: pkgs.runCommand "${name}.fish" { nativeBuildInputs = [ pkgs.babelfish ]; }
+    "${pkgs.babelfish}/bin/babelfish < ${path} > $out;";
+
+  hm-session-vars = pkgs.writeText "hm-session-vars.sh" ((config.lib.shell.exportAll config.home.sessionVariables) + "\n" + lib.optionalString (config.home.sessionPath != [ ]) ''
+    export PATH="$PATH''${PATH:+:}${concatStringsSep ":" config.home.sessionPath}"
+  '' + config.home.sessionVariablesExtra);
+in
+{
   imports = [
     (mkRemovedOptionModule [ "programs" "fish" "promptInit" ] ''
       Prompt is now configured through the
@@ -159,6 +166,15 @@ in {
   options = {
     programs.fish = {
       enable = mkEnableOption "fish, the friendly interactive shell";
+
+      useBabelfish = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          If enabled, the home-manager environment will be translated to native fish using <link xlink:href="https://github.com/bouk/babelfish">babelfish</link>.
+          Otherwise, <link xlink:href="https://github.com/oh-my-fish/plugin-foreign-env">foreign-env</link> will be used.
+        '';
+      };
 
       package = mkOption {
         type = types.package;
@@ -348,9 +364,13 @@ in {
         set -q __fish_home_manager_config_sourced; and exit
         set -g __fish_home_manager_config_sourced 1
 
+        ${if cfg.useBabelfish then ''
+        source ${babelfishTranslate hm-session-vars "hm-session-vars"} > /dev/null
+        '' else ''
         set --prepend fish_function_path ${pkgs.fishPlugins.foreign-env}/share/fish/vendor_functions.d
         fenv source ${config.home.profileDirectory}/etc/profile.d/hm-session-vars.sh > /dev/null
         set -e fish_function_path[1]
+        ''}
 
         ${cfg.shellInit}
 
