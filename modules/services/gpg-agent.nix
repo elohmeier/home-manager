@@ -279,10 +279,6 @@ in {
     #
     # directory.
     {
-      assertions = [
-        (hm.assertions.assertPlatform "services.gpg-agent" pkgs platforms.linux)
-      ];
-
       systemd.user.services.gpg-agent = {
         Unit = {
           Description = "GnuPG cryptographic agent and passphrase cache";
