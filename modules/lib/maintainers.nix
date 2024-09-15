@@ -107,6 +107,12 @@
     githubId = 32838899;
     name = "Daniel Wagenknecht";
   };
+  elohmeier = {
+    email = "elo-github@nerdworks.de";
+    github = "elohmeier";
+    githubId = 2536303;
+    name = "Enno Richter";
+  };
   henrisota = {
     email = "henrisota@users.noreply.github.com";
     github = "henrisota";

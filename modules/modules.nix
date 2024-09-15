@@ -52,6 +52,7 @@ let
     ./programs/abook.nix
     ./programs/aerc.nix
     ./programs/afew.nix
+    ./programs/aider.nix
     ./programs/alacritty.nix
     ./programs/alot.nix
     ./programs/antidote.nix
